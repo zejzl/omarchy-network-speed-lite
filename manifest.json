@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "zejzl.network-speed-lite",
+  "name": "Network Speed Lite",
+  "version": "1.0.0",
+  "author": "zejzl",
+  "description": "Zero-config download/upload rates for the bar; sums physical interfaces only so VPN traffic isn't counted twice",
+  "kinds": ["bar-widget"],
+  "entryPoints": {"barWidget": "BarWidget.qml"},
+  "barWidget": {
+    "displayName": "Network Speed Lite",
+    "category": "Network",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
