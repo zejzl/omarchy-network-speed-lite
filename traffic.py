@@ -24,26 +24,41 @@ def counters():
 
 def rates(previous, current, elapsed):
     # A newly connected/reset interface needs another sample, not a spike.
-    total = [0.0, 0.0]
+    per = {}
     for name, values in current.items():
         old = previous.get(name)
         if old is None or any(now < before for now, before in zip(values, old)):
+            per[name] = (0.0, 0.0)
             continue
-        for index in (0, 1):
-            total[index] += (values[index] - old[index]) / elapsed
-    return total
+        per[name] = tuple((values[i] - old[i]) / elapsed for i in (0, 1))
+    return per
 
 
 def main():
     previous = counters()
     before = time.monotonic()
+    totals = [0.0, 0.0]
+    peaks = [0.0, 0.0]
     while True:
         time.sleep(2)
         current = counters()
         now = time.monotonic()
-        download, upload = rates(previous, current, max(now - before, 0.001))
-        print(json.dumps({"download": download, "upload": upload,
-                          "interfaces": sorted(current)}), flush=True)
+        elapsed = max(now - before, 0.001)
+        per = rates(previous, current, elapsed)
+        download = sum(v[0] for v in per.values())
+        upload = sum(v[1] for v in per.values())
+        totals[0] += download * elapsed
+        totals[1] += upload * elapsed
+        peaks[0] = max(peaks[0], download)
+        peaks[1] = max(peaks[1], upload)
+        print(json.dumps({
+            "download": download, "upload": upload,
+            "interfaces": sorted(current),
+            "perInterface": [{"name": n, "download": per[n][0], "upload": per[n][1]}
+                             for n in sorted(per)],
+            "totalDown": totals[0], "totalUp": totals[1],
+            "peakDown": peaks[0], "peakUp": peaks[1],
+        }), flush=True)
         previous, before = current, now
 
 
